@@ -25,7 +25,7 @@ ui <- fluidPage(
                sliderInput("alpha", "P-value theshold (\\(\\alpha\\))", value=0.05, min=0, max=1, step=0.01))
     ),
     tags$p(
-        tags$strong("Assumed difference between group means under Null:"),
+        tags$strong("Assumed difference between group means in control:"),
         "0"
     ),
     # create side-by-side visualisations for p-value distributions
