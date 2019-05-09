@@ -14,13 +14,14 @@ library(ggplot2)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
+    tags$style(type="text/css", "#nullDots.recalculating, #altDots.recalculating, #nullHist.recalculating, #altHist.recalculating { opacity: 1.0; }"),
     withMathJax(),
     # Application title
     titlePanel("P value distributions"),
     fluidRow(
         column(6, numericInput("sampleSize", "Group size", value=10, min=1, step=1),
                sliderInput("repeats", "Repeats",
-                           value=1000, min=1, max=1000, step=1, animate = TRUE)),
+                           value=1000, min=1, max=1000, step=1, animate = animationOptions(200))),
         column(6, checkboxInput("equalVar", "Assume equal variances", value=TRUE),
                sliderInput("alpha", "P-value theshold (\\(\\alpha\\))", value=0.05, min=0, max=1, step=0.01))
     ),
@@ -41,8 +42,8 @@ ui <- fluidPage(
                sliderInput("altVar", "Variance under Alternative", min=0.1, max=10, value=1))
     ),
     fluidRow(
-        column(6, plotOutput("nullHist")),
-        column(6, plotOutput("altHist"))
+        column(6, plotOutput("nullDots"), plotOutput("nullHist")),
+        column(6, plotOutput("altDots"), plotOutput("altHist"))
     )
 )
 
@@ -66,6 +67,9 @@ server <- function(input, output, session) {
                                          treatmentAlt,
                                          var.equal=input$equalVar)$p.value)
     })
+    
+    output$nullDots <- renderPlot({pvalDots(pvals()[1:input$repeats,], 'null', input$alpha)})
+    output$altDots <- renderPlot({pvalDots(pvals()[1:input$repeats,], 'alternative', input$alpha)})
     output$nullHist <- renderPlot({pvalHist(pvals()[1:input$repeats,], 'null', input$alpha, "False positives:")}, height=200)
     output$altHist <- renderPlot({pvalHist(pvals()[1:input$repeats,], 'alternative', input$alpha, "False negatives:", FALSE)}, height=200)
 }
@@ -86,12 +90,28 @@ pvalHist <- function(pvalData, which, alpha, label_text, fp=TRUE) {
         geom_histogram(binwidth=0.01) + xlim(-0.01, 1.01) + 
         xlab("p-value") +
         scale_fill_manual(values=c('TRUE'="salmon", 'FALSE'='darkgrey'), 
-                          guide="none")
+                          guide="none") +
+      theme_bw()
     if(!missing(label_text)) {
         label_text <- sprintf("%s %0.3f", label_text, label_value)
         fig <- fig + annotate(x=0.8, y=1, geom="label", label=label_text)
     }
     fig
+}
+
+pvalDots <- function(pvalData, which, alpha) {
+  pvalData <- pvalData %>% mutate(index=1:nrow(pvalData)) %>%
+      top_n(50, index) %>% mutate(position=50:max(50-n()+1, 1))
+  color <- pvalData[[which]] < alpha
+  ggplot(pvalData, aes_string(x=which, y="position", color=color)) + 
+    geom_point() +
+    scale_color_manual(values=c('TRUE'="salmon", 'FALSE'='darkgrey'), 
+                      guide="none") +
+    ylim(1, 50) + xlim(0, 1) +
+    theme_bw() + theme(axis.text.y=element_blank(), 
+                       axis.ticks.y = element_blank(),
+                       axis.title.y = element_blank())
+  
 }
 
 rejections <- function(pvals, alpha) {
