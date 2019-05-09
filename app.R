@@ -43,11 +43,11 @@ ui <- fluidPage(
     column(6, 
            sliderInput("nullDiff", "Actual baseline difference between group means",
                        min=-1, max=1, value=0, step=0.1),
-           sliderInput("nullVar", "Variance under Null", min=0.1, max=10, value=1)),
+           sliderInput("nullVar", "Pre-treatment variance", min=0.1, max=10, value=1)),
     column(6, 
            sliderInput("altDiff", "Difference between group means due to treatment",
                        min=0, max=10, value=1, step=0.1),
-           sliderInput("altVar", "Variance under Alternative", min=0.1, max=10, value=1))
+           sliderInput("altVar", "Post-treatment variance", min=0.1, max=10, value=1))
   ),
   fluidRow(
     column(6, plotOutput("nullPlots")),
