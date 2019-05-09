@@ -15,7 +15,7 @@ library(cowplot)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-  tags$style(type="text/css", "#plots.recalculating { opacity: 1.0; }"),
+  tags$style(type="text/css", "#nullPlots.recalculating, #altPlots.recalculating { opacity: 1.0; }"),
   withMathJax(),
   # Application title
   titlePanel("P value distributions"),
@@ -50,7 +50,8 @@ ui <- fluidPage(
            sliderInput("altVar", "Variance under Alternative", min=0.1, max=10, value=1))
   ),
   fluidRow(
-    column(12, plotOutput("plots"))
+    column(6, plotOutput("nullPlots")),
+    column(6, plotOutput("altPlots"))
   )
 )
 
@@ -76,7 +77,8 @@ server <- function(input, output, session) {
   })
   
   output$combDiff <- reactive({input$nullDiff + input$altDiff})
-  output$plots <- renderPlot({combinePlots(pvals()[1:input$repeats,], input$alpha)})
+  output$nullPlots <- renderPlot({combinePlots(pvals()[1:input$repeats,], 'null', input$alpha, label_text="False positives:")})
+  output$altPlots <- renderPlot({combinePlots(pvals()[1:input$repeats,], 'alternative', input$alpha, label_text="False negatives:", fp=FALSE)})
 }
 
 sampleGroups <- function(samples, size, mean0, mean1, sd0, sd1) {
@@ -95,7 +97,8 @@ pvalHist <- function(pvalData, which, alpha, label_text, fp=TRUE) {
     geom_histogram(binwidth=0.01) + xlim(-0.01, 1.01) + 
     xlab("p-value") +
     scale_fill_manual(values=c('TRUE'="salmon", 'FALSE'='darkgrey'), 
-                      guide="none")
+                      guide="none") +
+    theme(axis.title.y = element_blank())
   if(!missing(label_text)) {
     plt <- ggplot_build(fig)
     ymax <- plt$layout$get_scales(1)$y$range$range[2]
@@ -122,13 +125,10 @@ pvalDots <- function(pvalData, which, alpha) {
   
 }
 
-combinePlots <- function(pvalData, alpha) {
-  nullDots <- pvalDots(pvalData, 'null', alpha)
-  altDots <- pvalDots(pvalData, 'alternative', alpha)
-  nullHist <- pvalHist(pvalData, 'null', alpha, "False positives:")
-  altHist <- pvalHist(pvalData, 'alternative', alpha, "False negatives:", FALSE)
-  
-  plot_grid(nullDots, altDots, nullHist, altHist, ncol=2, align="hv", rel_heights = c(2, 1))
+combinePlots <- function(pvalData, which, alpha, ...) {
+  dots <- pvalDots(pvalData, which, alpha)
+  hist <- pvalHist(pvalData, which, alpha, ...)
+  plot_grid(dots, hist, ncol=1, align="v", rel_heights = c(2, 1))
 }
 
 rejections <- function(pvals, alpha) {
