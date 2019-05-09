@@ -11,17 +11,18 @@ library(shiny)
 library(tidyr)
 library(dplyr)
 library(ggplot2)
+library(cowplot)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-    tags$style(type="text/css", "#nullDots.recalculating, #altDots.recalculating, #nullHist.recalculating, #altHist.recalculating { opacity: 1.0; }"),
+    tags$style(type="text/css", "#plots.recalculating { opacity: 1.0; }"),
     withMathJax(),
     # Application title
     titlePanel("P value distributions"),
     fluidRow(
         column(6, numericInput("sampleSize", "Group size", value=10, min=1, step=1),
                sliderInput("repeats", "Repeats",
-                           value=1000, min=1, max=1000, step=1, animate = animationOptions(200))),
+                           value=1000, min=1, max=1000, step=1, animate = animationOptions(500))),
         column(6, checkboxInput("equalVar", "Assume equal variances", value=TRUE),
                sliderInput("alpha", "P-value theshold (\\(\\alpha\\))", value=0.05, min=0, max=1, step=0.01))
     ),
@@ -42,8 +43,7 @@ ui <- fluidPage(
                sliderInput("altVar", "Variance under Alternative", min=0.1, max=10, value=1))
     ),
     fluidRow(
-        column(6, plotOutput("nullDots"), plotOutput("nullHist")),
-        column(6, plotOutput("altDots"), plotOutput("altHist"))
+        column(12, plotOutput("plots"))
     )
 )
 
@@ -68,10 +68,8 @@ server <- function(input, output, session) {
                                          var.equal=input$equalVar)$p.value)
     })
     
-    output$nullDots <- renderPlot({pvalDots(pvals()[1:input$repeats,], 'null', input$alpha)})
-    output$altDots <- renderPlot({pvalDots(pvals()[1:input$repeats,], 'alternative', input$alpha)})
-    output$nullHist <- renderPlot({pvalHist(pvals()[1:input$repeats,], 'null', input$alpha, "False positives:")}, height=200)
-    output$altHist <- renderPlot({pvalHist(pvals()[1:input$repeats,], 'alternative', input$alpha, "False negatives:", FALSE)}, height=200)
+    
+    output$plots <- renderPlot({combinePlots(pvals()[1:input$repeats,], input$alpha)})
 }
 
 sampleGroups <- function(samples, size, mean0, mean1, sd0, sd1) {
@@ -90,11 +88,12 @@ pvalHist <- function(pvalData, which, alpha, label_text, fp=TRUE) {
         geom_histogram(binwidth=0.01) + xlim(-0.01, 1.01) + 
         xlab("p-value") +
         scale_fill_manual(values=c('TRUE'="salmon", 'FALSE'='darkgrey'), 
-                          guide="none") +
-      theme_bw()
+                          guide="none")
     if(!missing(label_text)) {
+        plt <- ggplot_build(fig)
+        ymax <- plt$layout$get_scales(1)$y$range$range[2]
         label_text <- sprintf("%s %0.3f", label_text, label_value)
-        fig <- fig + annotate(x=0.8, y=1, geom="label", label=label_text)
+        fig <- fig + annotate(x=0.8, y=ymax - 0.15*ymax, geom="label", label=label_text)
     }
     fig
 }
@@ -107,11 +106,22 @@ pvalDots <- function(pvalData, which, alpha) {
     geom_point() +
     scale_color_manual(values=c('TRUE'="salmon", 'FALSE'='darkgrey'), 
                       guide="none") +
-    ylim(1, 50) + xlim(0, 1) +
-    theme_bw() + theme(axis.text.y=element_blank(), 
-                       axis.ticks.y = element_blank(),
-                       axis.title.y = element_blank())
+    ylim(1, 50) + xlim(0, 1) + ggtitle(which) +
+    theme(axis.text.y=element_blank(), 
+          axis.ticks.y = element_blank(),
+          axis.title.y = element_blank(),
+          axis.title.x = element_blank(),
+          axis.line.y = element_blank())
   
+}
+
+combinePlots <- function(pvalData, alpha) {
+  nullDots <- pvalDots(pvalData, 'null', alpha)
+  altDots <- pvalDots(pvalData, 'alternative', alpha)
+  nullHist <- pvalHist(pvalData, 'null', alpha, "False positives:")
+  altHist <- pvalHist(pvalData, 'alternative', alpha, "False negatives:", FALSE)
+  
+  plot_grid(nullDots, altDots, nullHist, altHist, ncol=2, align="hv", rel_heights = c(2, 1))
 }
 
 rejections <- function(pvals, alpha) {
