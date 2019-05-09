@@ -22,7 +22,7 @@ ui <- fluidPage(
   fluidRow(
     column(6, numericInput("sampleSize", "Group size", value=10, min=1, step=1),
            sliderInput("repeats", "Repeats",
-                       value=1000, min=1, max=1000, step=1, animate = animationOptions(500))),
+                       value=1000, min=1, max=1000, step=1, animate = animationOptions(1000))),
     column(6, checkboxInput("equalVar", "Assume equal variances", value=TRUE),
            sliderInput("alpha", "P-value theshold (\\(\\alpha\\))", value=0.05, min=0, max=1, step=0.01))
   ),
