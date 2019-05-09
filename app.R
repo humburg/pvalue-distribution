@@ -28,12 +28,12 @@ ui <- fluidPage(
   ),
   fluidRow(
     column(6, tags$p(
-      tags$strong("Assumed difference between group means in control:"),
+      tags$strong("Assumed baseline difference between group means:"),
       "0"
     )),
     column(6,
            tags$p(
-             tags$strong("Difference between group means:"),
+             tags$strong("Post-treatment difference between group means:"),
              textOutput("combDiff", inline=TRUE)
            ))
   ),
@@ -41,7 +41,7 @@ ui <- fluidPage(
   # under null and alternative hypothesis
   fluidRow(
     column(6, 
-           sliderInput("nullDiff", "Actual difference between group means in control",
+           sliderInput("nullDiff", "Actual baseline difference between group means",
                        min=-1, max=1, value=0, step=0.1),
            sliderInput("nullVar", "Variance under Null", min=0.1, max=10, value=1)),
     column(6, 
