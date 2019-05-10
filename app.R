@@ -96,7 +96,7 @@ pvalHist <- function(pvalData, which, alpha, label_text, fp=TRUE) {
   fill <- pvalData[[which]] < alpha
   fig <- ggplot(pvalData, aes_string(x=which,
                                      fill=fill)) +
-    geom_histogram(binwidth=0.01) + xlim(-0.01, 1.01) + 
+    geom_histogram(binwidth=0.01) + coord_cartesian(xlim=c(0, 1)) + 
     xlab("p-value") +
     scale_fill_manual(values=c('TRUE'="salmon", 'FALSE'='darkgrey'), 
                       guide="none") +
