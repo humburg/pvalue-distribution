@@ -111,14 +111,17 @@ pvalHist <- function(pvalData, which, alpha, label_text, fp=TRUE) {
 }
 
 pvalDots <- function(pvalData, which, alpha) {
+  title <- c(null="No treatment effect", alternative="Treatment effect")
+  
   pvalData <- pvalData %>% mutate(index=1:nrow(pvalData)) %>%
     top_n(50, index) %>% mutate(position=rev(50:max(50-n()+1, 1)))
   color <- pvalData[[which]] < alpha
+  
   ggplot(pvalData, aes_string(x=which, y="position", color=color)) + 
     geom_point() +
     scale_color_manual(values=c('TRUE'="salmon", 'FALSE'='darkgrey'), 
                        guide="none") +
-    ylim(1, 50) + xlim(0, 1) + ggtitle(which) +
+    ylim(1, 50) + xlim(0, 1) + ggtitle(title[which]) +
     theme(axis.text.y=element_blank(), 
           axis.ticks.y = element_blank(),
           axis.title.y = element_blank(),
