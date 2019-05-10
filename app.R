@@ -16,46 +16,42 @@ library(cowplot)
 # Define UI for application that draws a histogram
 ui <- fluidPage(
   tags$style(type="text/css", "#nullPlots.recalculating, #altPlots.recalculating { opacity: 1.0; }"),
+  tags$style(type="text/css", "body {text-align: center}"),
+  tags$style(type="text/css", "body * {text-align: initial}"),
+  tags$style(type="text/css", "div {display: inline-block}"),
   withMathJax(),
+  div(class="col-lg-8", style="max-width:1200px;",
   # Application title
   titlePanel("P value distributions"),
   fluidRow(
-    column(6, numericInput("sampleSize", "Group size", value=10, min=1, step=1)),
-    column(6, checkboxInput("equalVar", "Assume equal variances", value=TRUE))
-  ),
-  fluidRow(
-    column(6, sliderInput("repeats", "Repeats",
-                          value=1000, min=1, max=1000, step=1, animate = animationOptions(1000))),
-    column(6, sliderInput("alpha", "P-value theshold (\\(\\alpha\\))", value=0.05, min=0, max=1, step=0.01))
-  ),
-  fluidRow(
-    column(6, tags$p(
-      tags$strong("Assumed baseline difference between group means:"),
-      "0"
-    )),
-    column(6,
-           tags$p(
-             tags$strong("Post-treatment difference between group means:"),
-             textOutput("combDiff", inline=TRUE)
-           ))
+    column(6, align="center",
+        numericInput("sampleSize", "Group size", value=10, min=1, step=1)),
+    column(6, align="center",
+        checkboxInput("equalVar", "Assume equal variances", value=TRUE))
   ),
   # create side-by-side visualisations for p-value distributions
   # under null and alternative hypothesis
   fluidRow(
-    column(6, 
+    column(6, align="center",
+           sliderInput("repeats", "Repeats",
+                       value=1000, min=1, max=1000, step=1, animate = animationOptions(1000)),
+           tags$p(tags$strong("Assumed baseline difference between group means:"),"0"),
            sliderInput("nullDiff", "Actual baseline difference between group means",
                        min=-1, max=1, value=0, step=0.1),
-           sliderInput("nullVar", "Pre-treatment variance", min=0.1, max=10, value=1)),
-    column(6, 
+           sliderInput("nullVar", "Pre-treatment variance", min=0.1, max=10, value=1),
+           plotOutput("nullPlots")),
+    column(6, align="center",
+           sliderInput("alpha", "P-value theshold (\\(\\alpha\\))", value=0.05, min=0, max=1, step=0.01),
+           tags$p(
+             tags$strong("Post-treatment difference between group means:"),
+             textOutput("combDiff", inline=TRUE)
+           ),
            sliderInput("altDiff", "Difference between group means due to treatment",
                        min=0, max=10, value=1, step=0.1),
-           sliderInput("altVar", "Post-treatment variance", min=0.1, max=10, value=1))
-  ),
-  fluidRow(
-    column(6, plotOutput("nullPlots")),
-    column(6, plotOutput("altPlots"))
+           sliderInput("altVar", "Post-treatment variance", min=0.1, max=10, value=1),
+           plotOutput("altPlots"))
   )
-)
+))
 
 # Define server logic
 server <- function(input, output, session) {
