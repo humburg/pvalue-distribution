@@ -118,11 +118,10 @@ pvalDots <- function(pvalData, which, alpha) {
     scale_color_manual(values=c('TRUE'="salmon", 'FALSE'='darkgrey'), 
                        guide="none") +
     ylim(1, 50) + xlim(0, 1) + ggtitle(title[which]) +
-    theme(axis.text.y=element_blank(), 
-          axis.ticks.y = element_blank(),
-          axis.title.y = element_blank(),
-          axis.title.x = element_blank(),
-          axis.line.y = element_blank())
+    theme(axis.text = element_blank(), 
+          axis.ticks = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank())
   
 }
 
